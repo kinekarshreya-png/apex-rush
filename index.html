@@ -46,7 +46,6 @@ body {
   justify-content: space-between;
 }
 
-/* top stats */
 .top-bar {
   display: flex;
   justify-content: space-between;
@@ -110,7 +109,6 @@ body {
   backdrop-filter: blur(4px);
 }
 
-/* weapon panel */
 .weapon-panel {
   position: absolute;
   bottom: 24px;
@@ -190,7 +188,7 @@ body {
 
 .center-alert.show { opacity: 1; }
 
-/* MOBILE CONTROLS (first-person adapt) */
+/* MOBILE CONTROLS */
 .mobile-controls {
   position: fixed;
   bottom: 20px;
@@ -283,7 +281,7 @@ body {
   touch-action: none;
 }
 
-/* SCREENS (same style) */
+/* SCREENS (auth, loadout, lobby, end) */
 .screen {
   position: fixed;
   inset: 0;
@@ -292,9 +290,22 @@ body {
   justify-content: center;
   flex-direction: column;
   z-index: 200;
-  background: radial-gradient(circle at 30% 20%, #0a1520, #03070c);
+  background: radial-gradient(ellipse at 50% 30%, #0a1e30 0%, #040810 100%);
+  overflow-y: auto;
+  padding: 20px;
 }
 .screen.active { display: flex; }
+
+.auth-logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(32px, 8vw, 60px);
+  font-weight: 900;
+  color: #00ff88;
+  text-shadow: 0 0 40px #00ff88;
+  letter-spacing: 4px;
+  margin-bottom: 20px;
+}
+
 .auth-box, .lobby-box, .loadout-panel {
   background: #0b1420dd;
   backdrop-filter: blur(20px);
@@ -303,6 +314,18 @@ body {
   width: 340px;
   border-radius: 24px;
 }
+
+.fg-input, .auth-box input {
+  background: #060e18;
+  border: 1px solid #1a3a5c;
+  color: #ccc;
+  padding: 10px;
+  width: 100%;
+  margin: 6px 0;
+  border-radius: 6px;
+  font-family: monospace;
+}
+
 .btn {
   background: none;
   border: 2px solid #00ff88;
@@ -314,27 +337,22 @@ body {
   margin-top: 12px;
   cursor: pointer;
   transition: 0.2s;
+  width: 100%;
 }
 .btn-r { border-color: #ff4444; color: #ff4444; }
 .btn:active { background: #00ff8822; }
-.map-card {
+
+.map-card, .lcard {
   background: #101d2a;
   border: 1px solid #2a6e4a;
   border-radius: 12px;
   padding: 8px;
+  margin: 6px 0;
   text-align: center;
   cursor: pointer;
 }
-.map-card.selected { border-color: #00ff88; background: #1a3522; }
-.lcard {
-  background: #101d2a;
-  border: 1px solid #2a6e4a;
-  padding: 8px;
-  margin: 6px 0;
-  border-radius: 10px;
-  cursor: pointer;
-}
-.lcard.selected { border-color: #00ff88; background: #1a3522; }
+.map-card.selected, .lcard.selected { border-color: #00ff88; background: #1a3522; }
+
 @keyframes pulse {
   0% { opacity: 0.5; } 100% { opacity: 1; }
 }
@@ -342,60 +360,71 @@ body {
 </head>
 <body>
 
-<!-- AUTH / LOBBY / LOADOUT screens same structure -->
+<!-- AUTH SCREEN -->
 <div id="authScreen" class="screen active">
-  <div class="auth-logo" style="font-family:Orbitron;font-size:48px;color:#0f8;">APEX RUSH</div>
+  <div class="auth-logo">APEX RUSH</div>
   <div class="auth-box">
-    <div style="display:flex;gap:20px;margin-bottom:20px"><span id="tabLogin" onclick="switchTab('login')" style="cursor:pointer;color:#0f8;">LOGIN</span><span id="tabReg" onclick="switchTab('register')" style="cursor:pointer;">REGISTER</span></div>
+    <div style="display:flex; gap:20px; margin-bottom:20px; justify-content:center;">
+      <span id="tabLogin" onclick="switchTab('login')" style="cursor:pointer; color:#00ff88;">LOGIN</span>
+      <span id="tabReg" onclick="switchTab('register')" style="cursor:pointer;">REGISTER</span>
+    </div>
     <div id="loginForm">
-      <input id="lEmail" placeholder="Email" class="fg-input" style="width:100%;margin:6px 0;padding:10px;background:#111;border:1px solid #2a6e4a;color:#fff;"><input id="lPass" type="password" placeholder="Password" style="width:100%;margin:6px 0;padding:10px;background:#111;border:1px solid #2a6e4a;">
-      <div id="lErr" style="color:#ff4444;font-size:12px;"></div>
+      <input id="lEmail" class="fg-input" placeholder="Email" autocomplete="email">
+      <input id="lPass" type="password" class="fg-input" placeholder="Password" autocomplete="current-password">
+      <div id="lErr" style="color:#ff4444; font-size:12px;"></div>
       <button class="btn" onclick="doLogin()">ENTER ARENA</button>
     </div>
-    <div id="registerForm" style="display:none">
-      <input id="rName" placeholder="Username" style="width:100%;margin:6px 0;padding:10px;"><input id="rEmail" placeholder="Email"><input id="rPass" type="password" placeholder="Password">
+    <div id="registerForm" style="display:none;">
+      <input id="rName" class="fg-input" placeholder="Username" maxlength="12">
+      <input id="rEmail" class="fg-input" placeholder="Email" autocomplete="email">
+      <input id="rPass" type="password" class="fg-input" placeholder="Password (min 6 chars)">
       <div id="rErr" style="color:#ff4444;"></div>
-      <button class="btn" onclick="doRegister()">CREATE</button>
+      <button class="btn" onclick="doRegister()">CREATE ACCOUNT</button>
     </div>
   </div>
 </div>
 
+<!-- LOADOUT SCREEN -->
 <div id="loadoutScreen" class="screen">
-  <div style="background:#0b1420aa; padding:24px; border-radius:24px; width:90%; max-width:500px;">
-    <h2 style="color:#0f8;">LOADOUT</h2>
-    <div>MAPS</div>
-    <div style="display:flex;gap:12px;margin:12px 0;">
+  <div class="loadout-panel" style="width:90%; max-width:500px;">
+    <h2 style="color:#0f8; text-align:center;">LOADOUT</h2>
+    <div style="margin-top:12px;">🗺 SELECT MAP</div>
+    <div style="display:flex; gap:12px; margin:8px 0;">
       <div class="map-card selected" data-map="school" onclick="selMap(this,'school')">🏫 SCHOOL</div>
       <div class="map-card" data-map="temple" onclick="selMap(this,'temple')">🛕 TEMPLE</div>
       <div class="map-card" data-map="forest" onclick="selMap(this,'forest')">🌲 FOREST</div>
     </div>
-    <div>WEAPON</div>
-    <div><div class="lcard selected" onclick="selGun(this,'shotgun')">🔫 SHOTGUN (high dmg)</div><div class="lcard" onclick="selGun(this,'smg')">🔫 SMG (rapid)</div><div class="lcard" onclick="selGun(this,'sniper')">🔫 SNIPER (long range)</div></div>
-    <div>ARMOR</div>
-    <div><div class="lcard selected" onclick="selGuard(this,'light')">🛡️ LIGHT (speed)</div><div class="lcard" onclick="selGuard(this,'medium')">🛡️ MEDIUM</div><div class="lcard" onclick="selGuard(this,'heavy')">🛡️ HEAVY (tank)</div></div>
+    <div>🔫 WEAPON</div>
+    <div class="lcard selected" onclick="selGun(this,'shotgun')">SHOTGUN (high dmg)</div>
+    <div class="lcard" onclick="selGun(this,'smg')">SMG (rapid)</div>
+    <div class="lcard" onclick="selGun(this,'sniper')">SNIPER (long range)</div>
+    <div>🛡 ARMOR</div>
+    <div class="lcard selected" onclick="selGuard(this,'light')">LIGHT (speed)</div>
+    <div class="lcard" onclick="selGuard(this,'medium')">MEDIUM</div>
+    <div class="lcard" onclick="selGuard(this,'heavy')">HEAVY (tank)</div>
     <button class="btn" onclick="goLobby()">FIND MATCH</button>
     <button class="btn btn-r" onclick="doLogout()">LOGOUT</button>
   </div>
 </div>
 
+<!-- LOBBY SCREEN -->
 <div id="lobbyScreen" class="screen">
   <div class="lobby-box" style="text-align:center;">
-    <div>MATCHMAKING | MAP: <span id="lobbyMapName">SCHOOL</span></div>
+    <div style="font-size:28px; font-family:Orbitron;">MATCHMAKING</div>
+    <div>MAP: <span id="lobbyMapName">SCHOOL</span></div>
     <div style="font-size:48px;" id="lobbyTimer">30</div>
     <div>PLAYERS READY: <span id="realCount">1/5</span></div>
-    <div id="lobbySlots"></div>
+    <div id="lobbySlots" style="margin:12px 0;"></div>
     <button class="btn btn-r" onclick="cancelLobby()">CANCEL</button>
   </div>
 </div>
 
-<!-- MAIN GAME CANVAS (first-person) -->
+<!-- GAME CANVAS & HUD -->
 <canvas id="gameCanvas"></canvas>
-
-<!-- HUD Overlays -->
 <div class="hud-overlay">
   <div class="top-bar">
     <div class="health-card">
-      <div>⚡ SHIELD CELL</div>
+      <div>⚡ SHIELD</div>
       <div class="hp-bar-bg"><div class="hp-fill" id="hpFillBar" style="width:100%"></div></div>
       <div id="hpText">100 HP</div>
     </div>
@@ -412,7 +441,7 @@ body {
   </div>
   <div id="centerAlertMsg" class="center-alert">⚠️ CENTER ZONE NEARBY ⚠️</div>
 
-  <!-- MOBILE controls -->
+  <!-- MOBILE CONTROLS -->
   <div class="mobile-controls" id="mobileControls">
     <div class="joystick-area" id="joystickArea"><div class="joystick-base"><div class="joystick-knob" id="joystickKnob"></div></div></div>
     <div class="fire-btn" id="fireBtnMobile">🔫</div>
@@ -421,9 +450,10 @@ body {
   </div>
 </div>
 
+<!-- END SCREEN -->
 <div id="endScreen" class="screen">
-  <div class="end-title" id="endTitle"></div>
-  <div id="endMsg"></div>
+  <div class="end-title" id="endTitle" style="font-size:46px;"></div>
+  <div id="endMsg" style="margin:10px;"></div>
   <button class="btn" onclick="goPlayAgain()">PLAY AGAIN</button>
 </div>
 
@@ -432,24 +462,34 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getDatabase, ref, set, get, push, onValue, off, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const firebaseConfig = { apiKey:"AIzaSyCZ_Itzqsj9aHhFdnHrXZG061aWZedvJ94", authDomain:"apex-rush-game.firebaseapp.com", projectId:"apex-rush-game", storageBucket:"apex-rush-game.firebasestorage.app", messagingSenderId:"551986148656", appId:"1:551986148656:web:7b763ed3e83016f16b44f5" };
+const firebaseConfig = {
+  apiKey: "AIzaSyCZ_Itzqsj9aHhFdnHrXZG061aWZedvJ94",
+  authDomain: "apex-rush-game.firebaseapp.com",
+  projectId: "apex-rush-game",
+  storageBucket: "apex-rush-game.firebasestorage.app",
+  messagingSenderId: "551986148656",
+  appId: "1:551986148656:web:7b763ed3e83016f16b44f5"
+};
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// --- GLOBALS ---
+// ------------------- GLOBAL STATE -------------------
 const WORLD_SIZE = 2400;
 const TILE = 40;
 const CENTER_RADIUS = 80;
 const MAX_PLAYERS = 5;
-let user = null, username = "";
+
+let user = null;
+let username = "";
 let selectedMap = "school", selectedGun = "shotgun", selectedGuard = "light";
 let lobbyId = null, mySlot = -1, lobbyInterval = null;
 let inGame = false, dead = false, gameRunning = false;
 let player = null, remotePlayers = {}, monsters = [], bullets = [], particles = [];
 let walls = [];
 let gridSolid = Array(60).fill().map(() => Array(60).fill(false));
-let cameraAngle = 0;   // yaw (radians)
+let cameraAngle = 0;
 let moveDir = { x: 0, y: 0 };
 let lastTimestamp = 0;
 let lastShoot = 0, reloading = false, reloadTimer = 0;
@@ -460,70 +500,83 @@ let gameDbRef = null;
 let lastPushTime = 0;
 let frameRequest;
 let isMobile = false;
-let joystickActive = false, joyId = -1, joyVec = { x: 0, y: 0 };
+
+// Mobile joystick
+let joyVec = { x: 0, y: 0 };
+let mobileFiring = false;
+
+// Mouse look
 let mouseLookActive = false;
 
-// MAPS (walls & theme)
+// ------------------- MAPS & GUNS -------------------
 const MAPS = {
-  school: { name:"🏫 SCHOOL", walls:[[2,2,7,1],[10,2,7,1],[18,2,7,1],[26,2,7,1],[2,7,7,1],[10,7,7,1],[18,7,7,1],[26,7,7,1],[2,12,7,1],[10,12,7,1],[18,12,7,1],[26,12,7,1],[22,22,1,16],[37,22,1,16],[22,22,16,1],[22,37,16,1]], floorColor:"#1a2a1a" },
-  temple: { name:"🛕 TEMPLE", walls:[[2,2,3,1],[8,2,3,1],[14,2,3,1],[20,2,3,1],[26,2,3,1],[32,2,3,1],[5,10,2,2],[12,10,2,2],[19,10,2,2],[26,10,2,2],[33,10,2,2],[15,14,2,8],[15,22,10,2],[23,14,2,10],[22,22,1,16],[37,22,1,16],[22,22,16,1],[22,37,16,1]], floorColor:"#1a1208" },
-  forest: { name:"🌲 FOREST", walls:[[3,3,2,2],[7,5,2,2],[12,2,2,2],[17,4,2,2],[22,2,2,2],[27,3,2,2],[32,5,2,2],[2,10,2,2],[6,12,2,2],[11,9,2,2],[16,11,2,2],[21,10,2,2],[28,9,2,2],[33,11,2,2],[20,20,2,2],[20,36,2,2],[36,20,2,2],[36,36,2,2],[22,22,1,16],[37,22,1,16],[22,22,16,1],[22,37,16,1]], floorColor:"#0d1a08" }
+  school: { name: "🏫 SCHOOL", walls: [[2,2,7,1],[10,2,7,1],[18,2,7,1],[26,2,7,1],[2,7,7,1],[10,7,7,1],[18,7,7,1],[26,7,7,1],[2,12,7,1],[10,12,7,1],[18,12,7,1],[26,12,7,1],[22,22,1,16],[37,22,1,16],[22,22,16,1],[22,37,16,1]] },
+  temple: { name: "🛕 TEMPLE", walls: [[2,2,3,1],[8,2,3,1],[14,2,3,1],[20,2,3,1],[26,2,3,1],[32,2,3,1],[5,10,2,2],[12,10,2,2],[19,10,2,2],[26,10,2,2],[33,10,2,2],[15,14,2,8],[15,22,10,2],[23,14,2,10],[22,22,1,16],[37,22,1,16],[22,22,16,1],[22,37,16,1]] },
+  forest: { name: "🌲 FOREST", walls: [[3,3,2,2],[7,5,2,2],[12,2,2,2],[17,4,2,2],[22,2,2,2],[27,3,2,2],[32,5,2,2],[2,10,2,2],[6,12,2,2],[11,9,2,2],[16,11,2,2],[21,10,2,2],[28,9,2,2],[33,11,2,2],[20,20,2,2],[20,36,2,2],[36,20,2,2],[36,36,2,2],[22,22,1,16],[37,22,1,16],[22,22,16,1],[22,37,16,1]] }
 };
-const GUNS = { shotgun:{name:"SHOTGUN",damage:90,fireRate:800,reload:1800,magSize:6,reserve:24,spd:550,spread:.28,pellets:5,range:280}, smg:{name:"SMG",damage:22,fireRate:120,reload:1200,magSize:30,reserve:90,spd:750,spread:.07,pellets:1,range:400}, sniper:{name:"SNIPER",damage:150,fireRate:1200,reload:2000,magSize:5,reserve:15,spd:1000,spread:.01,pellets:1,range:1200} };
-const GUARDS = { light:{hp:80,spd:210}, medium:{hp:150,spd:150}, heavy:{hp:250,spd:90} };
-const SPAWNS = [[120,120],[WORLD_SIZE-120,120],[120,WORLD_SIZE-120],[WORLD_SIZE-120,WORLD_SIZE-120],[WORLD_SIZE/2,120]];
 
-// helpers
-function dist(a,b,c,d){ return Math.hypot(c-a,d-b); }
-function isCollidingWall(x,y,r=16){
-  for(let w of walls) if(x+r>w.x && x-r<w.x+w.w && y+r>w.y && y-r<w.y+w.h) return true;
+const GUNS = {
+  shotgun: { name: "SHOTGUN", damage: 90, fireRate: 800, reload: 1800, magSize: 6, reserve: 24, spd: 550, spread: 0.28, pellets: 5, range: 280 },
+  smg: { name: "SMG", damage: 22, fireRate: 120, reload: 1200, magSize: 30, reserve: 90, spd: 750, spread: 0.07, pellets: 1, range: 400 },
+  sniper: { name: "SNIPER", damage: 150, fireRate: 1200, reload: 2000, magSize: 5, reserve: 15, spd: 1000, spread: 0.01, pellets: 1, range: 1200 }
+};
+
+const GUARDS = {
+  light: { hp: 80, spd: 210 },
+  medium: { hp: 150, spd: 150 },
+  heavy: { hp: 250, spd: 90 }
+};
+
+const SPAWNS = [[120,120], [WORLD_SIZE-120,120], [120,WORLD_SIZE-120], [WORLD_SIZE-120,WORLD_SIZE-120], [WORLD_SIZE/2,120]];
+
+// Helper functions
+function dist(x1,y1,x2,y2) { return Math.hypot(x2-x1, y2-y1); }
+function isCollidingWall(x,y,r=16) {
+  for(let w of walls) if(x+r > w.x && x-r < w.x+w.w && y+r > w.y && y-r < w.y+w.h) return true;
   return false;
 }
-function clampMove(e, nx, ny){
-  if(!isCollidingWall(nx,ny,e.radius)) return {x:nx,y:ny};
-  if(!isCollidingWall(nx,e.y,e.radius)) return {x:nx,y:e.y};
-  if(!isCollidingWall(e.x,ny,e.radius)) return {x:e.x,y:ny};
-  return {x:e.x,y:e.y};
+function clampMove(e, nx, ny) {
+  if(!isCollidingWall(nx, ny, e.radius)) return {x:nx, y:ny};
+  if(!isCollidingWall(nx, e.y, e.radius)) return {x:nx, y:e.y};
+  if(!isCollidingWall(e.x, ny, e.radius)) return {x:e.x, y:ny};
+  return {x:e.x, y:e.y};
 }
-
-// BUILD GRID FOR RAYCAST
-function buildGridFromWalls(){
+function buildGridFromWalls() {
   for(let i=0;i<60;i++) for(let j=0;j<60;j++) gridSolid[i][j]=false;
-  walls.forEach(w=>{
-    let sx=Math.floor(w.x/TILE), sy=Math.floor(w.y/TILE);
-    let ex=Math.ceil((w.x+w.w)/TILE), ey=Math.ceil((w.y+w.h)/TILE);
+  walls.forEach(w => {
+    let sx = Math.floor(w.x/TILE), sy = Math.floor(w.y/TILE);
+    let ex = Math.ceil((w.x+w.w)/TILE), ey = Math.ceil((w.y+w.h)/TILE);
     for(let ix=sx; ix<ex; ix++) for(let iy=sy; iy<ey; iy++) if(ix>=0 && ix<60 && iy>=0 && iy<60) gridSolid[ix][iy]=true;
   });
 }
 
-// RAYCASTING RENDER
-function renderFirstPerson(ctx, width, height){
+// ------------------- RENDERING (first-person raycast) -------------------
+function renderFirstPerson(ctx, width, height) {
   const fov = Math.PI/2.8;
   const halfWidth = width/2;
   const maxDist = 800;
-  ctx.fillStyle="#060e14";
+  ctx.fillStyle = "#060e14";
   ctx.fillRect(0,0,width,height);
-  for(let x=0; x<width; x+=2){
+  for(let x=0; x<width; x+=2) {
     let angle = cameraAngle + (x - halfWidth)/halfWidth * (fov/2);
     let rayDirX = Math.cos(angle), rayDirY = Math.sin(angle);
     let mapX = Math.floor(player.x/TILE), mapY = Math.floor(player.y/TILE);
     let deltaX = Math.abs(1/rayDirX), deltaY = Math.abs(1/rayDirY);
     let stepX, stepY, sideX, sideY;
-    if(rayDirX<0){ stepX=-1; sideX=(player.x/TILE - mapX)*deltaX; } else { stepX=1; sideX=((mapX+1)*TILE - player.x)/TILE * deltaX; }
-    if(rayDirY<0){ stepY=-1; sideY=(player.y/TILE - mapY)*deltaY; } else { stepY=1; sideY=((mapY+1)*TILE - player.y)/TILE * deltaY; }
-    let hit = false, side = 0;
-    let distToWall = 0;
-    while(!hit && distToWall<maxDist){
-      if(sideX < sideY){ sideX+=deltaX; mapX+=stepX; side=0; }
+    if(rayDirX<0) { stepX=-1; sideX=(player.x/TILE - mapX)*deltaX; } else { stepX=1; sideX=((mapX+1)*TILE - player.x)/TILE * deltaX; }
+    if(rayDirY<0) { stepY=-1; sideY=(player.y/TILE - mapY)*deltaY; } else { stepY=1; sideY=((mapY+1)*TILE - player.y)/TILE * deltaY; }
+    let hit=false, side=0, distToWall=0;
+    while(!hit && distToWall<maxDist) {
+      if(sideX < sideY) { sideX+=deltaX; mapX+=stepX; side=0; }
       else { sideY+=deltaY; mapY+=stepY; side=1; }
       if(mapX<0||mapY<0||mapX>=60||mapY>=60) break;
       if(gridSolid[mapX][mapY]) hit=true;
     }
-    if(hit){
-      let dist = (side==0)?(sideX-deltaX):(sideY-deltaY);
-      dist = dist * Math.cos(cameraAngle - angle);
-      let lineHeight = Math.min(height, height/(dist)*70);
-      let shade = 255 - Math.min(180, dist*0.4);
+    if(hit) {
+      let d = (side==0)?(sideX-deltaX):(sideY-deltaY);
+      d = d * Math.cos(cameraAngle - angle);
+      let lineHeight = Math.min(height, height/(d)*70);
+      let shade = 255 - Math.min(180, d*0.4);
       let col = `rgb(${shade-40}, ${shade-20}, ${shade-60})`;
       if(side==1) col = `rgb(${shade-70}, ${shade-40}, ${shade-80})`;
       ctx.fillStyle = col;
@@ -534,39 +587,37 @@ function renderFirstPerson(ctx, width, height){
       ctx.fillRect(x, 0, 2, height);
     }
   }
-  // draw sprites (monsters, enemies)
-  let sprites = [...monsters.filter(m=>m.alive).map(m=>({x:m.x,y:m.y,size:18,color:m.color,type:"monster",name:"👾"})), ...Object.values(remotePlayers).filter(p=>p.alive).map(p=>({x:p.x,y:p.y,size:20,color:p.color,name:p.name}))];
-  sprites.sort((a,b)=> dist(player.x,player.y,b.x,b.y)-dist(player.x,player.y,a.x,a.y));
+  // draw sprites (enemies + monsters)
+  let sprites = [...monsters.filter(m=>m.alive).map(m=>({x:m.x,y:m.y,size:18,color:m.color,name:"👾"})), ...Object.values(remotePlayers).filter(p=>p.alive).map(p=>({x:p.x,y:p.y,size:20,color:p.color,name:p.name}))];
+  sprites.sort((a,b)=> dist(player.x,player.y,b.x,b.y) - dist(player.x,player.y,a.x,a.y));
   sprites.forEach(s=>{
     let dx = s.x - player.x, dy = s.y - player.y;
     let distTo = Math.hypot(dx,dy);
     if(distTo<0.5) return;
     let angleTo = Math.atan2(dy,dx);
     let angleDiff = angleTo - cameraAngle;
-    while(angleDiff > Math.PI) angleDiff -= Math.PI*2; while(angleDiff < -Math.PI) angleDiff += Math.PI*2;
+    while(angleDiff > Math.PI) angleDiff -= Math.PI*2;
+    while(angleDiff < -Math.PI) angleDiff += Math.PI*2;
     let screenX = (angleDiff / (fov/2)) * halfWidth + halfWidth;
-    if(screenX>0 && screenX<width && Math.abs(angleDiff)<Math.PI/2.2){
+    if(screenX>0 && screenX<width && Math.abs(angleDiff)<Math.PI/2.2) {
       let spriteHeight = Math.min(height*1.2, (height/(distTo*0.7))*45);
       let spriteWidth = spriteHeight;
       let y0 = height/2 - spriteHeight/2;
       ctx.fillStyle = s.color || "#ff9966";
-      ctx.shadowBlur = 6;
       ctx.fillRect(screenX - spriteWidth/2, y0, spriteWidth, spriteHeight);
       ctx.fillStyle = "white";
       ctx.font = `${Math.max(10, spriteHeight/6)}px monospace`;
       ctx.fillText(s.name || "?", screenX-10, y0-5);
-      ctx.shadowBlur = 0;
     }
   });
-  // weapon bob + crosshair
+  // crosshair
   ctx.fillStyle = "#ffffffdd";
   ctx.beginPath(); ctx.moveTo(halfWidth-12, height/2); ctx.lineTo(halfWidth+12, height/2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(halfWidth, height/2-12); ctx.lineTo(halfWidth, height/2+12); ctx.stroke();
   ctx.fillStyle = "#00ff88aa"; ctx.beginPath(); ctx.arc(halfWidth, height/2, 5, 0, Math.PI*2); ctx.stroke();
 }
 
-// MINIMAP
-function drawMinimap(ctxMini){
+function drawMinimap(ctxMini) {
   ctxMini.clearRect(0,0,140,140);
   let scale = 140/WORLD_SIZE;
   ctxMini.fillStyle = "#040a10"; ctxMini.fillRect(0,0,140,140);
@@ -578,8 +629,8 @@ function drawMinimap(ctxMini){
   if(player && player.alive){ ctxMini.fillStyle = "#00ff88"; ctxMini.beginPath(); ctxMini.arc(player.x*scale,player.y*scale,5,0,Math.PI*2); ctxMini.fill(); }
 }
 
-// CORE UPDATE (physics, monsters, shooting)
-function updateGame(dt, now){
+// ------------------- GAME LOGIC -------------------
+function updateGame(dt, now) {
   if(!gameRunning || !player || dead) return;
   let moveX = moveDir.x, moveY = moveDir.y;
   let len = Math.hypot(moveX,moveY); if(len>0){ moveX/=len; moveY/=len; }
@@ -587,49 +638,112 @@ function updateGame(dt, now){
   let newY = player.y + moveY * player.speed * dt;
   let clamped = clampMove(player, newX, newY);
   player.x = clamped.x; player.y = clamped.y;
-  if(reloading){ reloadTimer -= dt*1000; if(reloadTimer<=0){ let load = Math.min(gunStats.magSize - currentAmmo, reserveAmmo); currentAmmo+=load; reserveAmmo-=load; reloading=false; document.getElementById("reloadIndicator").style.display="none"; updateAmmoUI(); } }
-  let firing = (isMobile? window.mobileFiring : (mouseLookActive && window.mouseDownFlag)) || false;
-  if(firing && !reloading && currentAmmo>0 && now-lastShoot>gunStats.fireRate){
-    for(let i=0;i<gunStats.pellets;i++){ let angle = cameraAngle + (Math.random()-.5)*gunStats.spread;
-      bullets.push({x:player.x+Math.cos(angle)*12,y:player.y+Math.sin(angle)*12,angle:angle,spd:gunStats.spd,dmg:gunStats.damage/gunStats.pellets,range:gunStats.range,dist:0,owner:player,oname:username});
+
+  if(reloading){
+    reloadTimer -= dt*1000;
+    if(reloadTimer<=0){
+      let load = Math.min(gunStats.magSize - currentAmmo, reserveAmmo);
+      currentAmmo += load;
+      reserveAmmo -= load;
+      reloading = false;
+      document.getElementById("reloadIndicator").style.display = "none";
+      updateAmmoUI();
     }
-    lastShoot=now; currentAmmo--; if(currentAmmo===0 && reserveAmmo>0) startReload();
+  }
+
+  let firing = (isMobile ? mobileFiring : (mouseLookActive && window.mouseDownFlag)) || false;
+  if(firing && !reloading && currentAmmo>0 && now-lastShoot > gunStats.fireRate){
+    for(let i=0;i<gunStats.pellets;i++){
+      let angle = cameraAngle + (Math.random()-.5)*gunStats.spread;
+      bullets.push({x:player.x+Math.cos(angle)*12, y:player.y+Math.sin(angle)*12, angle:angle, spd:gunStats.spd, dmg:gunStats.damage/gunStats.pellets, range:gunStats.range, dist:0, owner:player, oname:username});
+    }
+    lastShoot = now;
+    currentAmmo--;
+    if(currentAmmo===0 && reserveAmmo>0) startReload();
     updateAmmoUI();
   }
-  // update bullets
-  bullets = bullets.filter(b=>{ b.x+=Math.cos(b.angle)*b.spd*dt; b.y+=Math.sin(b.angle)*b.spd*dt; b.dist+=b.spd*dt; if(b.dist>b.range) return false; if(isCollidingWall(b.x,b.y,3)) return false; let hit = false; [...Object.values(remotePlayers),...monsters].forEach(t=>{ if(t.alive && dist(b.x,b.y,t.x,t.y)<t.radius+5){ t.hp-=b.dmg; if(t.hp<=0) killEntity(t,b.oname); hit=true; } }); return !hit; });
-  monsters.forEach(m=>{ if(!m.alive) return; let closest=[player]; let d2=dist(player.x,player.y,m.x,m.y); if(d2<250){ let angle=Math.atan2(player.y-m.y,player.x-m.x); let newpos=clampMove(m,m.x+Math.cos(angle)*m.speed*dt,m.y+Math.sin(angle)*m.speed*dt); m.x=newpos.x; m.y=newpos.y; if(d2<m.radius+16 && now-m.lastAttack>1100){ player.hp -= 20; m.lastAttack=now; if(player.hp<=0) killEntity(player, "MONSTER"); } } });
-  // update remote bots AI (simple)
-  Object.values(remotePlayers).forEach(rp=>{ if(rp.isBot && rp.alive){ let angleToC=Math.atan2(WORLD_SIZE/2-rp.y, WORLD_SIZE/2-rp.x); let moveX=Math.cos(angleToC)*rp.speed*dt, moveY=Math.sin(angleToC)*rp.speed*dt; let nx=rp.x+moveX, ny=rp.y+moveY; if(!isCollidingWall(nx,ny,14)) { rp.x=nx; rp.y=ny; } rp.angle=angleToC; } });
+
+  bullets = bullets.filter(b=>{
+    b.x += Math.cos(b.angle)*b.spd*dt;
+    b.y += Math.sin(b.angle)*b.spd*dt;
+    b.dist += b.spd*dt;
+    if(b.dist > b.range) return false;
+    if(isCollidingWall(b.x,b.y,3)) return false;
+    let hit = false;
+    [...Object.values(remotePlayers), ...monsters].forEach(t=>{
+      if(t.alive && dist(b.x,b.y,t.x,t.y) < (t.radius||12)+5){
+        t.hp -= b.dmg;
+        if(t.hp <= 0) killEntity(t, b.oname);
+        hit = true;
+      }
+    });
+    return !hit;
+  });
+
+  monsters.forEach(m=>{
+    if(!m.alive) return;
+    let d2 = dist(player.x,player.y,m.x,m.y);
+    if(d2 < 250){
+      let angle = Math.atan2(player.y-m.y, player.x-m.x);
+      let newpos = clampMove(m, m.x+Math.cos(angle)*m.speed*dt, m.y+Math.sin(angle)*m.speed*dt);
+      m.x = newpos.x; m.y = newpos.y;
+      if(d2 < m.radius+16 && now-m.lastAttack > 1100){
+        player.hp -= 20;
+        m.lastAttack = now;
+        if(player.hp <= 0) killEntity(player, "MONSTER");
+      }
+    }
+  });
+
+  // simple bot movement
+  Object.values(remotePlayers).forEach(rp=>{
+    if(rp.isBot && rp.alive){
+      let angleToC = Math.atan2(WORLD_SIZE/2 - rp.y, WORLD_SIZE/2 - rp.x);
+      let nx = rp.x + Math.cos(angleToC)*rp.speed*dt;
+      let ny = rp.y + Math.sin(angleToC)*rp.speed*dt;
+      if(!isCollidingWall(nx,ny,14)) { rp.x=nx; rp.y=ny; }
+      rp.angle = angleToC;
+    }
+  });
+
   particles = particles.filter(p=>{ p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt; return p.life>0; });
-  if(dist(player.x,player.y,WORLD_SIZE/2,WORLD_SIZE/2) < CENTER_RADIUS){ endGame(true, "YOU REACHED THE CENTER ZONE! VICTORY"); }
+
+  if(dist(player.x,player.y, WORLD_SIZE/2, WORLD_SIZE/2) < CENTER_RADIUS){
+    endGame(true, "YOU REACHED THE CENTER ZONE! VICTORY");
+  }
   updateHUDvisuals();
-  if(performance.now()-lastPushTime>60){ pushPlayerState(); lastPushTime=performance.now(); }
+  if(performance.now()-lastPushTime > 60){ pushPlayerState(); lastPushTime=performance.now(); }
 }
 
 function killEntity(target, killerName){
-  target.alive=false; if(target===player){ dead=true; endGame(false, `KILLED BY ${killerName}`); } else { if(killerName===username) myKills++; addKillMsg(`${killerName} eliminated ${target.name||"ENEMY"}`); }
+  target.alive = false;
+  if(target === player){
+    dead = true;
+    endGame(false, `KILLED BY ${killerName}`);
+  } else {
+    if(killerName === username) myKills++;
+    addKillMsg(`${killerName} eliminated ${target.name||"ENEMY"}`);
+  }
 }
-function startReload(){ if(reserveAmmo<=0) return; reloading=true; reloadTimer=gunStats.reload; document.getElementById("reloadIndicator").style.display="block"; }
-function updateAmmoUI(){ document.getElementById("ammoCurr").innerText=currentAmmo; document.getElementById("ammoReserve").innerText=reserveAmmo; }
-function updateHUDvisuals(){ if(player){ let pct=(player.hp/player.maxHp)*100; let fill=document.getElementById("hpFillBar"); fill.style.width=pct+"%"; fill.className="hp-fill"+(pct<25?" low":pct<60?" mid":""); document.getElementById("hpText").innerHTML=Math.floor(player.hp)+" HP"; document.getElementById("aliveCount").innerText=[player,...Object.values(remotePlayers)].filter(e=>e.alive).length; } }
-function addKillMsg(msg){ let el=document.getElementById("killFeedMsg"); el.innerHTML=`⚡ ${msg}`; setTimeout(()=>{ if(document.getElementById("killFeedMsg")) document.getElementById("killFeedMsg").innerHTML="⚔️ ELIMINATIONS"; }, 2000);}
-function pushPlayerState(){ if(gameDbRef && player) set(gameDbRef,{x:Math.round(player.x),y:Math.round(player.y),angle:cameraAngle,hp:Math.round(player.hp),alive:player.alive,kills:myKills}); }
-function endGame(win,msg){ if(!gameRunning)return; gameRunning=false; inGame=false; document.getElementById("endTitle").innerHTML=win?"🏆 VICTORY 🏆":"💀 DEFEAT"; document.getElementById("endMsg").innerHTML=msg; document.getElementById("endScreen").classList.add("active"); if(gameDbRef) remove(gameDbRef); if(lobbyId) remove(ref(db,`lobbies/${lobbyId}`)); }
-window.goPlayAgain=()=>{ document.getElementById("endScreen").classList.remove("active"); document.getElementById("loadoutScreen").classList.add("active"); }
 
-// ---- GAME INIT (FPS) ----
+function startReload(){ if(reserveAmmo<=0) return; reloading=true; reloadTimer=gunStats.reload; document.getElementById("reloadIndicator").style.display="block"; }
+function updateAmmoUI(){ document.getElementById("ammoCurr").innerText=currentAmmo; document.getElementById("ammoReserve").innerText=reserveAmmo; document.getElementById("weapNameUI").innerHTML=gunStats.name; }
+function updateHUDvisuals(){ if(player){ let pct=(player.hp/player.maxHp)*100; let fill=document.getElementById("hpFillBar"); fill.style.width=pct+"%"; fill.className="hp-fill"+(pct<25?" low":pct<60?" mid":""); document.getElementById("hpText").innerHTML=Math.floor(player.hp)+" HP"; document.getElementById("aliveCount").innerHTML=[player,...Object.values(remotePlayers)].filter(e=>e.alive).length; } }
+function addKillMsg(msg){ let el=document.getElementById("killFeedMsg"); el.innerHTML=`⚡ ${msg}`; setTimeout(()=>{ if(document.getElementById("killFeedMsg")) document.getElementById("killFeedMsg").innerHTML="⚔️ ELIMINATIONS"; }, 2000); }
+function pushPlayerState(){ if(gameDbRef && player) set(gameDbRef,{x:Math.round(player.x),y:Math.round(player.y),angle:cameraAngle,hp:Math.round(player.hp),alive:player.alive,kills:myKills}); }
+function endGame(win,msg){ if(!gameRunning) return; gameRunning=false; inGame=false; document.getElementById("endTitle").innerHTML=win?"🏆 VICTORY 🏆":"💀 DEFEAT"; document.getElementById("endMsg").innerHTML=msg; document.getElementById("endScreen").classList.add("active"); if(gameDbRef) remove(gameDbRef); if(lobbyId) remove(ref(db,`lobbies/${lobbyId}`)); }
+window.goPlayAgain = () => { document.getElementById("endScreen").classList.remove("active"); document.getElementById("loadoutScreen").classList.add("active"); };
+
 function startGameWithSlots(slots){
-  inGame=true; dead=false; gameRunning=true; player=null;
+  inGame=true; dead=false; gameRunning=true;
   gunStats = GUNS[selectedGun]; guardStats = GUARDS[selectedGuard];
-  currentAmmo=gunStats.magSize; reserveAmmo=gunStats.reserve;
-  reloading=false;
-  walls = MAPS[selectedMap].walls.map(w=>({x:w[0]*TILE,y:w[1]*TILE,w:w[2]*TILE,h:w[3]*TILE}));
+  currentAmmo = gunStats.magSize; reserveAmmo = gunStats.reserve; reloading=false;
+  walls = MAPS[selectedMap].walls.map(w=>({x:w[0]*TILE, y:w[1]*TILE, w:w[2]*TILE, h:w[3]*TILE}));
   buildGridFromWalls();
-  let spawn=SPAWNS[mySlot];
-  player={x:spawn[0],y:spawn[1],hp:guardStats.hp,maxHp:guardStats.hp,speed:guardStats.spd,radius:16,alive:true,name:username,kills:0};
+  let spawn = SPAWNS[mySlot];
+  player = { x:spawn[0], y:spawn[1], hp:guardStats.hp, maxHp:guardStats.hp, speed:guardStats.spd, radius:16, alive:true, name:username, kills:0 };
   cameraAngle = 0;
-  monsters = []; remotePlayers = {};
+  remotePlayers = {}; monsters = [];
   for(let i=0;i<18;i++){ let mx,my; do{ mx=80+Math.random()*(WORLD_SIZE-160); my=80+Math.random()*(WORLD_SIZE-160); } while(isCollidingWall(mx,my,13) || dist(mx,my,WORLD_SIZE/2,WORLD_SIZE/2)<110); monsters.push({x:mx,y:my,hp:60,maxHp:60,speed:65,radius:12,alive:true,color:selectedMap==="temple"?"#cc8844":"#44aa33",lastAttack:0,name:"WILDER"}); }
   Object.entries(slots).forEach(([idx,s])=>{ let i=parseInt(idx); if(i===mySlot) return; let gd=GUARDS[s.guard]||GUARDS.medium; remotePlayers[i]={x:SPAWNS[i][0],y:SPAWNS[i][1],hp:gd.hp,maxHp:gd.hp,speed:gd.spd,radius:14,alive:true,isBot:s.isBot||false,name:s.name,color:s.color||"#ffaa44",angle:0,kills:0}; });
   bullets=[]; particles=[];
@@ -637,6 +751,7 @@ function startGameWithSlots(slots){
   onValue(ref(db,`games/${lobbyId}/players`), snap=>{ if(snap.exists()) snap.forEach(child=>{ let idx=parseInt(child.key), data=child.val(); if(idx!==mySlot && remotePlayers[idx]){ remotePlayers[idx].x=data.x||remotePlayers[idx].x; remotePlayers[idx].y=data.y||remotePlayers[idx].y; remotePlayers[idx].hp=data.hp||remotePlayers[idx].hp; if(data.hp<=0) remotePlayers[idx].alive=false; } }); });
   lastTimestamp=performance.now(); frameRequest=requestAnimationFrame(gameLoop);
 }
+
 function gameLoop(now){
   if(!gameRunning) return;
   let dt=Math.min((now-lastTimestamp)/1000,0.033); lastTimestamp=now;
@@ -645,53 +760,149 @@ function gameLoop(now){
   canvas.width=innerWidth; canvas.height=innerHeight;
   renderFirstPerson(ctx, canvas.width, canvas.height);
   let mmCanvas=document.getElementById("minimapCanvas"); if(mmCanvas) drawMinimap(mmCanvas.getContext("2d"));
-  frameRequest=requestAnimationFrame(gameLoop);
+  frameRequest = requestAnimationFrame(gameLoop);
 }
-// UI updates
-function updateAmmoUI(){ document.getElementById("ammoCurr").innerText=currentAmmo; document.getElementById("ammoReserve").innerText=reserveAmmo; document.getElementById("weapNameUI").innerHTML=gunStats.name; }
 
-// CONTROLS
+// ------------------- LOBBY & MATCHMAKING -------------------
+async function goLobby(){
+  document.getElementById("lobbyMapName").innerText = MAPS[selectedMap].name;
+  showScreen("lobbyScreen");
+  await findOrCreateLobby();
+}
+async function findOrCreateLobby(){
+  const snap = await get(ref(db,"lobbies"));
+  let found = null;
+  snap.forEach(c=>{ let d=c.val(); if(!d.started && d.mapKey===selectedMap && Object.keys(d.slots||{}).length<MAX_PLAYERS) found={id:c.key, data:d}; });
+  if(found){
+    lobbyId = found.id;
+    let used = Object.keys(found.data.slots||{}).map(Number);
+    mySlot = [0,1,2,3,4].find(i=>!used.includes(i));
+  } else {
+    let nr = push(ref(db,"lobbies"));
+    lobbyId = nr.key; mySlot = 0;
+    await set(nr, { started:false, mapKey:selectedMap, created:Date.now() });
+  }
+  await set(ref(db,`lobbies/${lobbyId}/slots/${mySlot}`), { uid:user.uid, name:username, gun:selectedGun, guard:selectedGuard, color:"#00ff88", isBot:false });
+  onDisconnect(ref(db,`lobbies/${lobbyId}/slots/${mySlot}`)).remove();
+  startLobbyCountdown();
+  listenLobby();
+}
+function startLobbyCountdown(){
+  let timer = 30;
+  let interval = setInterval(()=>{
+    document.getElementById("lobbyTimer").innerText = timer;
+    if(timer <= 0){ clearInterval(interval); startMatchBotsAndLaunch(); }
+    timer--;
+  },1000);
+  window.lobbyTimerInt = interval;
+}
+function listenLobby(){
+  onValue(ref(db,`lobbies/${lobbyId}/slots`), (snap)=>{
+    let slots = snap.val()||{};
+    let rc = Object.values(slots).filter(s=>!s.isBot).length;
+    document.getElementById("realCount").innerHTML = `${rc}/${MAX_PLAYERS}`;
+    let html = "";
+    for(let i=0;i<MAX_PLAYERS;i++){ let s=slots[i]; html+=`<div>${s?`👤 ${s.name}`:"⚡ waiting..."}</div>`; }
+    document.getElementById("lobbySlots").innerHTML = html;
+    if(rc >= MAX_PLAYERS){ clearInterval(window.lobbyTimerInt); startMatchBotsAndLaunch(); }
+  });
+}
+async function startMatchBotsAndLaunch(){
+  let snap = await get(ref(db,`lobbies/${lobbyId}/slots`));
+  let slots = snap.val()||{};
+  let used = Object.keys(slots).map(Number);
+  let gunKeys = Object.keys(GUNS), guardKeys = Object.keys(GUARDS);
+  for(let i=0;i<MAX_PLAYERS;i++){
+    if(!used.includes(i)){
+      await set(ref(db,`lobbies/${lobbyId}/slots/${i}`), { uid:"bot_"+i, name:`BOT_${i+1}`, gun:gunKeys[Math.floor(Math.random()*3)], guard:guardKeys[Math.floor(Math.random()*3)], color:"#ff8866", isBot:true });
+    }
+  }
+  await set(ref(db,`lobbies/${lobbyId}/started`), true);
+  let final = await get(ref(db,`lobbies/${lobbyId}/slots`));
+  if(window.lobbyTimerInt) clearInterval(window.lobbyTimerInt);
+  startGameWithSlots(final.val()||{});
+}
+window.cancelLobby = async () => { if(lobbyId) await remove(ref(db,`lobbies/${lobbyId}/slots/${mySlot}`)); showScreen("loadoutScreen"); };
+function showScreen(id){ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active")); document.getElementById(id).classList.add("active"); }
+
+// ------------------- CONTROLS (desktop + mobile) -------------------
 function setupControls(){
-  let canvas=document.getElementById("gameCanvas");
+  let canvas = document.getElementById("gameCanvas");
   canvas.addEventListener("click",()=>{ if(gameRunning && !isMobile) canvas.requestPointerLock(); });
-  document.addEventListener("pointerlockchange",()=>{ mouseLookActive=document.pointerLockElement===canvas; if(mouseLookActive) document.addEventListener("mousemove",onMouseMove); else document.removeEventListener("mousemove",onMouseMove); });
+  document.addEventListener("pointerlockchange",()=>{ mouseLookActive = document.pointerLockElement === canvas; if(mouseLookActive) document.addEventListener("mousemove",onMouseMove); else document.removeEventListener("mousemove",onMouseMove); });
   function onMouseMove(e){ if(mouseLookActive && gameRunning){ cameraAngle += e.movementX*0.008; } }
-  window.mouseDownFlag=false; document.addEventListener("mousedown",(e)=>{ if(e.button===0 && mouseLookActive) window.mouseDownFlag=true; }); document.addEventListener("mouseup",()=>{ window.mouseDownFlag=false; });
-  document.addEventListener("keydown",(e)=>{ if(e.code==="KeyW") moveDir.y=-1; if(e.code==="KeyS") moveDir.y=1; if(e.code==="KeyA") moveDir.x=-1; if(e.code==="KeyD") moveDir.x=1; if(e.code==="KeyR" && !reloading && currentAmmo<gunStats.magSize && reserveAmmo>0) startReload(); });
+  window.mouseDownFlag = false;
+  document.addEventListener("mousedown",(e)=>{ if(e.button===0 && mouseLookActive) window.mouseDownFlag=true; });
+  document.addEventListener("mouseup",()=>{ window.mouseDownFlag=false; });
+  document.addEventListener("keydown",(e)=>{
+    if(e.code==="KeyW") moveDir.y=-1; if(e.code==="KeyS") moveDir.y=1;
+    if(e.code==="KeyA") moveDir.x=-1; if(e.code==="KeyD") moveDir.x=1;
+    if(e.code==="KeyR" && !reloading && currentAmmo<gunStats?.magSize && reserveAmmo>0) startReload();
+  });
   document.addEventListener("keyup",(e)=>{ if(e.code==="KeyW"||e.code==="KeyS") moveDir.y=0; if(e.code==="KeyA"||e.code==="KeyD") moveDir.x=0; });
+
   if(isMobile){
-    document.getElementById("mobileControls").style.display="block";
-    let joyKnob=document.getElementById("joystickKnob"), joyArea=document.getElementById("joystickArea");
-    let active=false,id,baseX,baseY, maxR=45;
+    document.getElementById("mobileControls").style.display = "block";
+    let joyKnob = document.getElementById("joystickKnob"), joyArea = document.getElementById("joystickArea");
+    let active=false, id, baseX, baseY, maxR=45;
     joyArea.addEventListener("touchstart",(e)=>{ e.preventDefault(); let t=e.touches[0]; active=true; id=t.identifier; let rect=joyArea.getBoundingClientRect(); baseX=rect.left+rect.width/2; baseY=rect.top+rect.height/2; });
     document.addEventListener("touchmove",(e)=>{ for(let t of e.changedTouches) if(active && t.identifier===id){ let dx=t.clientX-baseX, dy=t.clientY-baseY; let len=Math.hypot(dx,dy); if(len>maxR){ dx=dx/len*maxR; dy=dy/len*maxR; } joyVec.x=dx/maxR; joyVec.y=dy/maxR; joyKnob.style.left=(50+dx/maxR*50)+"%"; joyKnob.style.top=(50+dy/maxR*50)+"%"; } });
     document.addEventListener("touchend",(e)=>{ for(let t of e.changedTouches) if(active && t.identifier===id){ active=false; joyVec.x=0; joyVec.y=0; joyKnob.style.left="50%"; joyKnob.style.top="50%"; } });
     setInterval(()=>{ if(active && gameRunning){ moveDir.x=joyVec.x; moveDir.y=joyVec.y; } }, 30);
-    let fireBtn=document.getElementById("fireBtnMobile"); fireBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); window.mobileFiring=true; }); fireBtn.addEventListener("touchend",()=>{ window.mobileFiring=false; });
-    document.getElementById("reloadBtnMobile").addEventListener("click",()=>{ if(!reloading && currentAmmo<gunStats.magSize && reserveAmmo>0) startReload(); });
-    let rotateArea=document.getElementById("rotateArea"); let lastX=0; rotateArea.addEventListener("touchstart",(e)=>{ lastX=e.touches[0].clientX; }); rotateArea.addEventListener("touchmove",(e)=>{ let delta=e.touches[0].clientX-lastX; cameraAngle+=delta*0.012; lastX=e.touches[0].clientX; });
+    let fireBtn = document.getElementById("fireBtnMobile");
+    fireBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); mobileFiring=true; });
+    fireBtn.addEventListener("touchend",()=>{ mobileFiring=false; });
+    document.getElementById("reloadBtnMobile").addEventListener("click",()=>{ if(!reloading && currentAmmo<gunStats?.magSize && reserveAmmo>0) startReload(); });
+    let rotateArea = document.getElementById("rotateArea");
+    let lastX=0;
+    rotateArea.addEventListener("touchstart",(e)=>{ lastX=e.touches[0].clientX; });
+    rotateArea.addEventListener("touchmove",(e)=>{ let delta=e.touches[0].clientX-lastX; cameraAngle+=delta*0.012; lastX=e.touches[0].clientX; });
   }
 }
 
-// LOBBY & AUTH logic (same as original but streamlined)
-async function goLobby(){ selectedGun=selectedGun; selectedGuard=selectedGuard; document.getElementById("lobbyMapName").innerText=MAPS[selectedMap].name; showScreen("lobbyScreen"); await findOrCreateLobby(); }
-async function findOrCreateLobby(){ let snap=await get(ref(db,"lobbies")); let found=null; snap.forEach(c=>{ let d=c.val(); if(!d.started && d.mapKey===selectedMap && Object.keys(d.slots||{}).length<MAX_P) found={id:c.key,data:d}; }); if(found){ lobbyId=found.id; let used=Object.keys(found.data.slots||{}).map(Number); mySlot=[0,1,2,3,4].find(i=>!used.includes(i)); } else { let nr=push(ref(db,"lobbies")); lobbyId=nr.key; mySlot=0; await set(nr,{started:false,mapKey:selectedMap,created:Date.now()}); } await set(ref(db,`lobbies/${lobbyId}/slots/${mySlot}`),{uid:user.uid,name:username,gun:selectedGun,guard:selectedGuard,color:"#00ff88",isBot:false}); onDisconnect(ref(db,`lobbies/${lobbyId}/slots/${mySlot}`)).remove(); startLobbyCountdown(); listenLobby(); }
-function startLobbyCountdown(){ let timer=30; let interval=setInterval(()=>{ document.getElementById("lobbyTimer").innerText=timer; if(timer<=0){ clearInterval(interval); startMatchBotsAndLaunch(); } timer--; },1000); window.lobbyTimerInt=interval; }
-function listenLobby(){ onValue(ref(db,`lobbies/${lobbyId}/slots`),(snap)=>{ let slots=snap.val()||{}; let rc=Object.values(slots).filter(s=>!s.isBot).length; document.getElementById("realCount").innerHTML=`${rc}/${MAX_P}`; let html=""; for(let i=0;i<MAX_P;i++){ let s=slots[i]; html+=`<div>${s?`👤 ${s.name}`:"⚡ empty"}</div>`; } document.getElementById("lobbySlots").innerHTML=html; if(rc>=MAX_P){ clearInterval(window.lobbyTimerInt); startMatchBotsAndLaunch(); } }); }
-async function startMatchBotsAndLaunch(){ let snap=await get(ref(db,`lobbies/${lobbyId}/slots`)); let slots=snap.val()||{}; let used=Object.keys(slots).map(Number); let gunKeys=Object.keys(GUNS), guardKeys=Object.keys(GUARDS); for(let i=0;i<MAX_P;i++){ if(!used.includes(i)) await set(ref(db,`lobbies/${lobbyId}/slots/${i}`),{uid:"bot_"+i,name:`BOT_${i+1}`,gun:gunKeys[Math.floor(Math.random()*3)],guard:guardKeys[Math.floor(Math.random()*3)],color:"#ff8866",isBot:true}); } await set(ref(db,`lobbies/${lobbyId}/started`),true); let final=await get(ref(db,`lobbies/${lobbyId}/slots`)); if(window.lobbyTimerInt) clearInterval(window.lobbyTimerInt); startGameWithSlots(final.val()||{}); }
-window.cancelLobby=async()=>{ if(lobbyId) await remove(ref(db,`lobbies/${lobbyId}/slots/${mySlot}`)); showScreen("loadoutScreen"); };
-function showScreen(id){ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active")); document.getElementById(id).classList.add("active"); }
+// ------------------- AUTH & UI -------------------
+window.switchTab = (t) => {
+  document.getElementById("loginForm").style.display = t==="login" ? "block" : "none";
+  document.getElementById("registerForm").style.display = t==="register" ? "block" : "none";
+};
+window.doLogin = async () => {
+  const email = document.getElementById("lEmail").value.trim();
+  const pass = document.getElementById("lPass").value;
+  const errDiv = document.getElementById("lErr");
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) { errDiv.innerText = e.message; }
+};
+window.doRegister = async () => {
+  const name = document.getElementById("rName").value.trim().toUpperCase();
+  const email = document.getElementById("rEmail").value.trim();
+  const pass = document.getElementById("rPass").value;
+  const errDiv = document.getElementById("rErr");
+  if(!name) { errDiv.innerText = "Username required"; return; }
+  if(pass.length<6) { errDiv.innerText = "Password min 6 chars"; return; }
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, { displayName: name });
+    await set(ref(db, `users/${cred.user.uid}`), { username: name, created: Date.now() });
+  } catch(e) { errDiv.innerText = e.message; }
+};
+window.doLogout = async () => { await signOut(auth); showScreen("authScreen"); };
+window.selMap = (el,m) => { selectedMap=m; document.querySelectorAll("#loadoutScreen .map-card").forEach(c=>c.classList.remove("selected")); el.classList.add("selected"); };
+window.selGun = (el,g) => { selectedGun=g; document.querySelectorAll("#loadoutScreen .lcard").forEach(c=>c.classList.remove("selected")); el.classList.add("selected"); };
+window.selGuard = window.selGun;
 
-// AUTH wrappers
-window.switchTab=(t)=>{ document.getElementById("loginForm").style.display=t==="login"?"block":"none"; document.getElementById("registerForm").style.display=t==="register"?"block":"none"; };
-window.doLogin=async()=>{ try{ await signInWithEmailAndPassword(auth, document.getElementById("lEmail").value, document.getElementById("lPass").value); }catch(e){ document.getElementById("lErr").innerText=e.message; } };
-window.doRegister=async()=>{ try{ let cred=await createUserWithEmailAndPassword(auth, document.getElementById("rEmail").value, document.getElementById("rPass").value); await updateProfile(cred.user,{displayName:document.getElementById("rName").value}); await set(ref(db,`users/${cred.user.uid}`),{username:document.getElementById("rName").value}); }catch(e){ document.getElementById("rErr").innerText=e.message; } };
-window.doLogout=()=>signOut(auth);
-window.selMap=(el,m)=>{ selectedMap=m; document.querySelectorAll(".map-card").forEach(c=>c.classList.remove("selected")); el.classList.add("selected"); };
-window.selGun=(el,g)=>{ selectedGun=g; document.querySelectorAll("#loadoutScreen .lcard").forEach(c=>c.classList.remove("selected")); el.classList.add("selected"); };
-window.selGuard=window.selGun;
-onAuthStateChanged(auth, u=>{ if(u){ username=u.displayName||u.email.split("@")[0]; showScreen("loadoutScreen"); } else showScreen("authScreen"); });
-setTimeout(()=>{ isMobile=('ontouchstart' in window); setupControls(); },100);
+onAuthStateChanged(auth, u => {
+  if(u){
+    user = u;
+    username = u.displayName || u.email.split("@")[0].toUpperCase();
+    document.getElementById("pBadge")?.remove();
+    showScreen("loadoutScreen");
+  } else {
+    showScreen("authScreen");
+  }
+});
+
+setTimeout(() => { isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints>0; setupControls(); }, 100);
 </script>
 </body>
 </html>
