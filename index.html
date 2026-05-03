@@ -251,21 +251,45 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        // Lighting
+        // Improved lighting
         const ambient = new THREE.AmbientLight(0x404060);
         scene.add(ambient);
         const sunLight = new THREE.DirectionalLight(0xfff5e0, 1.2);
         sunLight.position.set(15, 20, 5);
         sunLight.castShadow = true;
         sunLight.receiveShadow = true;
-        sunLight.shadow.mapSize.width = 512;
-        sunLight.shadow.mapSize.height = 512;
+        sunLight.shadow.mapSize.width = 1024;
+        sunLight.shadow.mapSize.height = 1024;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 50;
+        sunLight.shadow.camera.left = -20;
+        sunLight.shadow.camera.right = 20;
+        sunLight.shadow.camera.top = 20;
+        sunLight.shadow.camera.bottom = -20;
         scene.add(sunLight);
         const fillLight = new THREE.PointLight(0x5577aa, 0.5);
         fillLight.position.set(0, 5, 0);
         scene.add(fillLight);
+        const backLight = new THREE.PointLight(0xffaa66, 0.3);
+        backLight.position.set(-5, 3, -8);
+        scene.add(backLight);
+
+        // Ambient particles (dust motes)
+        const particleCount = 400;
+        const particleGeometry = new THREE.BufferGeometry();
+        const particlePositions = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount; i++) {
+            particlePositions[i*3] = (Math.random() - 0.5) * 60;
+            particlePositions[i*3+1] = Math.random() * 5;
+            particlePositions[i*3+2] = (Math.random() - 0.5) * 60;
+        }
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particleMaterial = new THREE.PointsMaterial({ color: 0x88aaff, size: 0.08, transparent: true, opacity: 0.4 });
+        const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+        scene.add(particleSystem);
 
         // Game state
         let gameActive = false;
@@ -285,63 +309,96 @@
             shotgun: { name: "SHOTGUN", damage: 85, fireRate: 800, magSize: 6, reserve: 24, reloadTime: 1600, range: 18, pellets: 5 }
         };
 
-        // Helper: simple desk
-        function createDesk(x, z) {
+        // Enhanced object creation functions
+        function createDesk(x, z, rotationY = 0) {
             const group = new THREE.Group();
-            const top = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.1, 0.7), new THREE.MeshStandardMaterial({ color: 0xcbb88e }));
+            const top = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.1, 0.7), new THREE.MeshStandardMaterial({ color: 0xcbb88e, roughness: 0.6, metalness: 0.1 }));
             top.position.y = 0.65;
             top.castShadow = true;
             group.add(top);
-            const leg = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.55, 0.05), new THREE.MeshStandardMaterial({ color: 0xaa8866 }));
+            const leg = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.55, 0.05), new THREE.MeshStandardMaterial({ color: 0xaa8866, roughness: 0.8 }));
             leg.position.y = 0.3;
             leg.castShadow = true;
             group.add(leg);
             group.position.set(x, 0, z);
+            group.rotation.y = rotationY;
             scene.add(group);
             collisionBlocks.push({ x1: x-0.6, x2: x+0.6, z1: z-0.5, z2: z+0.5 });
         }
 
-        function createBench(x, z) {
+        function createBench(x, z, rotationY = 0) {
             const group = new THREE.Group();
-            const seat = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 0.6), new THREE.MeshStandardMaterial({ color: 0xbc9a6c }));
+            const seat = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 0.6), new THREE.MeshStandardMaterial({ color: 0xbc9a6c, roughness: 0.7 }));
             seat.position.y = 0.4;
             seat.castShadow = true;
             group.add(seat);
             const legs = [[-0.5,0.2,-0.25],[0.5,0.2,-0.25],[-0.5,0.2,0.25],[0.5,0.2,0.25]];
             legs.forEach(pos => {
-                const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
+                const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.9 }));
                 leg.position.set(pos[0], pos[1], pos[2]);
                 leg.castShadow = true;
                 group.add(leg);
             });
             group.position.set(x, 0, z);
+            group.rotation.y = rotationY;
             scene.add(group);
             collisionBlocks.push({ x1: x-0.7, x2: x+0.7, z1: z-0.4, z2: z+0.4 });
         }
 
-        function createTree(x, z) {
-            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 1.2, 6), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
-            trunk.position.set(x, 0.6, z);
-            trunk.castShadow = true;
-            const leaves = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1.0, 6), new THREE.MeshStandardMaterial({ color: 0x4caf50 }));
-            leaves.position.set(x, 1.2, z);
-            leaves.castShadow = true;
-            scene.add(trunk, leaves);
-            collisionBlocks.push({ x1: x-0.5, x2: x+0.5, z1: z-0.5, z2: z+0.5 });
+        function createTeacherDesk(x, z) {
+            const group = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.2, 1.0), new THREE.MeshStandardMaterial({ color: 0xaa8866, roughness: 0.5 }));
+            base.position.y = 0.5;
+            base.castShadow = true;
+            group.add(base);
+            const top = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.1, 1.0), new THREE.MeshStandardMaterial({ color: 0xddbb99 }));
+            top.position.y = 0.65;
+            top.castShadow = true;
+            group.add(top);
+            group.position.set(x, 0, z);
+            scene.add(group);
+            collisionBlocks.push({ x1: x-0.8, x2: x+0.8, z1: z-0.6, z2: z+0.6 });
         }
 
-        function createPillar(x, z) {
-            const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2.8, 0.8), new THREE.MeshStandardMaterial({ color: 0xccaa88 }));
-            pillar.position.set(x, 1.4, z);
+        function createTree(x, z, size = 1) {
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4 * size, 0.6 * size, 1.2 * size, 6), new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.9 }));
+            trunk.position.set(x, 0.6 * size, z);
+            trunk.castShadow = true;
+            const leaves = new THREE.Mesh(new THREE.ConeGeometry(0.8 * size, 1.0 * size, 6), new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 0.4 }));
+            leaves.position.set(x, 1.2 * size, z);
+            leaves.castShadow = true;
+            scene.add(trunk, leaves);
+            collisionBlocks.push({ x1: x-0.5*size, x2: x+0.5*size, z1: z-0.5*size, z2: z+0.5*size });
+        }
+
+        function createRock(x, z, size = 0.4) {
+            const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(size), new THREE.MeshStandardMaterial({ color: 0x887766, roughness: 0.8 }));
+            rock.position.set(x, size*0.5, z);
+            rock.castShadow = true;
+            scene.add(rock);
+            collisionBlocks.push({ x1: x-size-0.1, x2: x+size+0.1, z1: z-size-0.1, z2: z+size+0.1 });
+        }
+
+        function createCrate(x, z) {
+            const crate = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 1.2), new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.7 }));
+            crate.position.set(x, 0.4, z);
+            crate.castShadow = true;
+            scene.add(crate);
+            collisionBlocks.push({ x1: x-0.7, x2: x+0.7, z1: z-0.7, z2: z+0.7 });
+        }
+
+        function createPillar(x, z, color = 0xccaa88) {
+            const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3.0, 0.8), new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.2 }));
+            pillar.position.set(x, 1.5, z);
             pillar.castShadow = true;
             scene.add(pillar);
             collisionBlocks.push({ x1: x-0.5, x2: x+0.5, z1: z-0.5, z2: z+0.5 });
         }
 
-        function addWall(x1, z1, x2, z2, height = 2.5) {
+        function addWall(x1, z1, x2, z2, height = 2.5, materialColor = 0x9aacbb) {
             const length = Math.hypot(x2-x1, z2-z1);
             const angle = Math.atan2(z2-z1, x2-x1);
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(length, height, 0.3), new THREE.MeshStandardMaterial({ color: 0x9aacbb }));
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(length, height, 0.3), new THREE.MeshStandardMaterial({ color: materialColor, roughness: 0.6 }));
             wall.position.set((x1+x2)/2, height/2, (z1+z2)/2);
             wall.rotation.y = angle;
             wall.castShadow = true;
@@ -352,111 +409,207 @@
             collisionBlocks.push({ x1: minX, x2: maxX, z1: minZ, z2: maxZ });
         }
 
-        // Map generators
+        function addFloorTile(x, z, size, color) {
+            const tile = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshStandardMaterial({ color: color, roughness: 0.7, metalness: 0.05 }));
+            tile.rotation.x = -Math.PI/2;
+            tile.position.set(x, -0.08, z);
+            tile.receiveShadow = true;
+            scene.add(tile);
+        }
+
+        // Map generators with enhanced realism
         function buildSchool() {
             const ground = new THREE.Mesh(new THREE.PlaneGeometry(70, 70), new THREE.MeshStandardMaterial({ color: 0x6a8e6a, roughness: 0.8 }));
             ground.rotation.x = -Math.PI/2;
             ground.position.y = -0.1;
             ground.receiveShadow = true;
             scene.add(ground);
-            addWall(-16, -14, 16, -14);
-            addWall(-16, 14, 16, 14);
-            addWall(-16, -14, -16, 14);
-            addWall(16, -14, 16, 14);
-            for (let i = -10; i <= 10; i+=3.5) {
-                for (let j = -8; j <= 8; j+=3) {
-                    if (Math.abs(i) < 14 && Math.abs(j) < 11) createDesk(i, j);
+            // Floor tiles inside school area
+            for (let i = -14; i <= 14; i+=2) {
+                for (let j = -12; j <= 12; j+=2) {
+                    if (Math.abs(i) < 15 && Math.abs(j) < 13) {
+                        addFloorTile(i, j, 1.8, (i+j) % 4 === 0 ? 0x8aae8a : 0x6a8e6a);
+                    }
                 }
             }
-            for (let i = -8; i <= 8; i+=2.5) createBench(i, -5);
-            for (let i = -8; i <= 8; i+=2.5) createBench(i, 6);
-            const zone = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 0.2, 24), new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0x442200 }));
+            // Walls
+            addWall(-18, -15, 18, -15, 3, 0x8a9eb0);
+            addWall(-18, 15, 18, 15, 3, 0x8a9eb0);
+            addWall(-18, -15, -18, 15, 3, 0x8a9eb0);
+            addWall(18, -15, 18, 15, 3, 0x8a9eb0);
+            // Classrooms: 4 rows of desks, 3 columns
+            for (let row = -8; row <= 8; row += 3.5) {
+                for (let col = -10; col <= 10; col += 3) {
+                    if (Math.abs(row) < 12 && Math.abs(col) < 13) createDesk(col, row);
+                }
+            }
+            // Benches along walls
+            for (let i = -12; i <= 12; i+=2.5) createBench(i, -11);
+            for (let i = -12; i <= 12; i+=2.5) createBench(i, 11);
+            // Teacher desk at front (z = -12)
+            createTeacherDesk(0, -12);
+            // Blackboard
+            const board = new THREE.Mesh(new THREE.BoxGeometry(5, 1.5, 0.2), new THREE.MeshStandardMaterial({ color: 0x2c3e2e, roughness: 0.2 }));
+            board.position.set(0, 1.2, -14.2);
+            board.castShadow = true;
+            scene.add(board);
+            // Corridor pillars
+            for (let x = -12; x <= 12; x+=6) createPillar(x, 0);
+            // Center zone
+            const zone = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 0.2, 24), new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0x442200, metalness: 0.3 }));
             zone.position.set(0, 0, 0);
             zone.castShadow = true;
             scene.add(zone);
             centerZone = { mesh: zone, radius: 3.2 };
-            return { center: { x: 0, z: 0 }, radius: 3.2 };
         }
 
         function buildMilitary() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: 0x8a9a6e }));
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: 0x8a9a6e, roughness: 0.9 }));
             ground.rotation.x = -Math.PI/2;
             ground.position.y = -0.1;
+            ground.receiveShadow = true;
             scene.add(ground);
-            for (let i = -12; i <= 12; i+=4) {
-                const crate = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 1.2), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
-                crate.position.set(i, 0.4, -9);
-                crate.castShadow = true;
-                scene.add(crate);
-                collisionBlocks.push({ x1: i-0.7, x2: i+0.7, z1: -9.5, z2: -8.5 });
+            // Dust patches
+            for (let i = 0; i < 120; i++) {
+                const x = (Math.random() - 0.5) * 70;
+                const z = (Math.random() - 0.5) * 70;
+                const patch = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), new THREE.MeshStandardMaterial({ color: 0x7a8a5e, roughness: 0.9 }));
+                patch.rotation.x = -Math.PI/2;
+                patch.position.set(x, -0.09, z);
+                patch.receiveShadow = true;
+                scene.add(patch);
             }
+            // Barracks / crates
+            for (let i = -14; i <= 14; i+=3.5) {
+                createCrate(i, -12);
+                createCrate(i, 12);
+            }
+            // Barriers (concrete blocks)
+            for (let i = -15; i <= 15; i+=5) {
+                const barrier = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.6, 1.0), new THREE.MeshStandardMaterial({ color: 0x9aaeae, roughness: 0.7 }));
+                barrier.position.set(i, 0.3, -9);
+                barrier.castShadow = true;
+                scene.add(barrier);
+                collisionBlocks.push({ x1: i-0.9, x2: i+0.9, z1: -9.5, z2: -8.5 });
+            }
+            // Watchtowers
             for (let s = -1; s <= 1; s+=2) {
-                const tower = new THREE.Mesh(new THREE.BoxGeometry(1.6, 3.2, 1.6), new THREE.MeshStandardMaterial({ color: 0xaa8866 }));
-                tower.position.set(s*22, 1.6, s*18);
-                tower.castShadow = true;
-                scene.add(tower);
-                collisionBlocks.push({ x1: s*22-1, x2: s*22+1, z1: s*18-1, z2: s*18+1 });
+                const towerBase = new THREE.Mesh(new THREE.BoxGeometry(1.8, 3.5, 1.8), new THREE.MeshStandardMaterial({ color: 0xaa8866, roughness: 0.5 }));
+                towerBase.position.set(s*24, 1.8, s*20);
+                towerBase.castShadow = true;
+                scene.add(towerBase);
+                const towerTop = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 2.2), new THREE.MeshStandardMaterial({ color: 0xccaa88 }));
+                towerTop.position.set(s*24, 3.8, s*20);
+                towerTop.castShadow = true;
+                scene.add(towerTop);
+                collisionBlocks.push({ x1: s*24-1.2, x2: s*24+1.2, z1: s*20-1.2, z2: s*20+1.2 });
             }
             const zone = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.5, 0.2, 24), new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0x442200 }));
             zone.position.set(0, 0, 0);
             scene.add(zone);
             centerZone = { mesh: zone, radius: 3.5 };
-            return { center: { x: 0, z: 0 }, radius: 3.5 };
         }
 
         function buildForest() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), new THREE.MeshStandardMaterial({ color: 0x4a6741 }));
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), new THREE.MeshStandardMaterial({ color: 0x4a6741, roughness: 0.9 }));
             ground.rotation.x = -Math.PI/2;
             ground.position.y = -0.1;
+            ground.receiveShadow = true;
             scene.add(ground);
-            for (let i = 0; i < 70; i++) {
+            // Trees with size variation
+            for (let i = 0; i < 120; i++) {
                 let angle = Math.random() * Math.PI * 2;
-                let r = 8 + Math.random() * 32;
+                let r = 6 + Math.random() * 38;
                 let x = Math.cos(angle) * r;
                 let z = Math.sin(angle) * r;
-                createTree(x, z);
+                let size = 0.7 + Math.random() * 0.8;
+                createTree(x, z, size);
             }
-            const cabin = new THREE.Mesh(new THREE.BoxGeometry(3, 2.2, 3), new THREE.MeshStandardMaterial({ color: 0xbc9a6c }));
-            cabin.position.set(-7, 0.5, -6);
-            cabin.castShadow = true;
-            scene.add(cabin);
+            // Rocks
+            for (let i = 0; i < 40; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                let r = 5 + Math.random() * 35;
+                let x = Math.cos(angle) * r;
+                let z = Math.sin(angle) * r;
+                createRock(x, z, 0.3 + Math.random() * 0.3);
+            }
+            // Cabin
+            const cabinBase = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.2, 3.2), new THREE.MeshStandardMaterial({ color: 0xbc9a6c, roughness: 0.7 }));
+            cabinBase.position.set(-7, 0.5, -6);
+            cabinBase.castShadow = true;
+            scene.add(cabinBase);
+            const roof = new THREE.Mesh(new THREE.ConeGeometry(2.2, 1.5, 4), new THREE.MeshStandardMaterial({ color: 0xaa5555 }));
+            roof.position.set(-7, 1.7, -6);
+            roof.castShadow = true;
+            scene.add(roof);
             collisionBlocks.push({ x1: -8.5, x2: -5.5, z1: -7.5, z2: -4.5 });
             const zone = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 0.2, 24), new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0x442200 }));
             zone.position.set(0, 0, 0);
             scene.add(zone);
             centerZone = { mesh: zone, radius: 3 };
-            return { center: { x: 0, z: 0 }, radius: 3 };
         }
 
         function buildTemple() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(70, 70), new THREE.MeshStandardMaterial({ color: 0xcbb88e }));
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(70, 70), new THREE.MeshStandardMaterial({ color: 0xcbb88e, roughness: 0.8 }));
             ground.rotation.x = -Math.PI/2;
             ground.position.y = -0.1;
+            ground.receiveShadow = true;
             scene.add(ground);
+            // Sandstone texture effect with small tiles
+            for (let i = -30; i <= 30; i+=2.5) {
+                for (let j = -30; j <= 30; j+=2.5) {
+                    if (Math.hypot(i, j) > 8 && Math.hypot(i, j) < 32) {
+                        const tile = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.8), new THREE.MeshStandardMaterial({ color: 0xdbba8e, roughness: 0.7 }));
+                        tile.rotation.x = -Math.PI/2;
+                        tile.position.set(i, -0.08, j);
+                        tile.receiveShadow = true;
+                        scene.add(tile);
+                    }
+                }
+            }
+            // Circular pillars
+            for (let i = 0; i < 16; i++) {
+                let angle = (i / 16) * Math.PI * 2;
+                let x = Math.cos(angle) * 9;
+                let z = Math.sin(angle) * 9;
+                createPillar(x, z, 0xddbb99);
+            }
+            // Inner pillars
             for (let i = 0; i < 12; i++) {
                 let angle = (i / 12) * Math.PI * 2;
-                let x = Math.cos(angle) * 8.5;
-                let z = Math.sin(angle) * 8.5;
-                createPillar(x, z);
+                let x = Math.cos(angle) * 5.5;
+                let z = Math.sin(angle) * 5.5;
+                createPillar(x, z, 0xccaa88);
             }
-            const shrine = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.2, 2.5), new THREE.MeshStandardMaterial({ color: 0xddbb88 }));
-            shrine.position.set(0, 0.6, 0);
-            shrine.castShadow = true;
-            scene.add(shrine);
+            // Central shrine
+            const shrineBase = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.6, 2.8), new THREE.MeshStandardMaterial({ color: 0xddbb88, metalness: 0.3 }));
+            shrineBase.position.set(0, 0.3, 0);
+            shrineBase.castShadow = true;
+            scene.add(shrineBase);
+            const shrineTop = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 0.8, 8), new THREE.MeshStandardMaterial({ color: 0xffcc88, metalness: 0.4 }));
+            shrineTop.position.set(0, 0.9, 0);
+            shrineTop.castShadow = true;
+            scene.add(shrineTop);
+            // Steps
+            for (let i = 0; i < 3; i++) {
+                const step = new THREE.Mesh(new THREE.BoxGeometry(3.2 - i*0.6, 0.2, 0.8), new THREE.MeshStandardMaterial({ color: 0xccaa88 }));
+                step.position.set(0, 0.1 + i*0.2, 2.5 - i*0.5);
+                step.castShadow = true;
+                scene.add(step);
+            }
             const zone = new THREE.Mesh(new THREE.CylinderGeometry(3.8, 3.8, 0.2, 24), new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0x442200 }));
             zone.position.set(0, 0, 0);
             scene.add(zone);
             centerZone = { mesh: zone, radius: 3.8 };
-            return { center: { x: 0, z: 0 }, radius: 3.8 };
         }
 
         function clearWorld() {
             while(scene.children.length > 0) {
                 const child = scene.children[0];
-                if(child.isMesh && !child.userData.persist && child !== groundHelper) scene.remove(child);
+                if(child.isMesh && child !== particleSystem && child !== groundHelper && child !== sunLight && child !== ambient && child !== fillLight && child !== backLight) scene.remove(child);
                 else if(child.isGroup) scene.remove(child);
-                else if(child === sunLight || child === ambient || child === fillLight) {}
-                else if(child !== renderer.domElement) scene.remove(child);
+                else if(child === particleSystem) {}
+                else if(child !== renderer.domElement && child !== sunLight && child !== ambient && child !== fillLight && child !== backLight) scene.remove(child);
             }
             collisionBlocks = [];
             enemies = [];
@@ -469,7 +622,7 @@
                 let r = 6 + Math.random() * 14;
                 let x = Math.cos(angle) * r;
                 let z = Math.sin(angle) * r;
-                const enemyMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.6, 0.8), new THREE.MeshStandardMaterial({ color: 0xff6666 }));
+                const enemyMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.6, 0.8), new THREE.MeshStandardMaterial({ color: 0xff6666, roughness: 0.4 }));
                 enemyMesh.position.set(x, 0.8, z);
                 enemyMesh.castShadow = true;
                 scene.add(enemyMesh);
@@ -478,7 +631,7 @@
             for (let i = 0; i < 3; i++) {
                 let x = (Math.random() - 0.5) * 28;
                 let z = (Math.random() - 0.5) * 28;
-                const aiMesh = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.7, 0.9), new THREE.MeshStandardMaterial({ color: 0x88aaff }));
+                const aiMesh = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.7, 0.9), new THREE.MeshStandardMaterial({ color: 0x88aaff, roughness: 0.3 }));
                 aiMesh.position.set(x, 0.85, z);
                 aiMesh.castShadow = true;
                 scene.add(aiMesh);
@@ -500,7 +653,6 @@
                 player.hp = armor === "light" ? 100 : 170;
                 player.maxHp = player.hp;
                 player.speed = armor === "light" ? 5.2 : 3.8;
-                // Spawn player away from center zone (12,12) safe spot
                 camera.position.set(12, 1.6, 12);
                 player.x = 12;
                 player.z = 12;
@@ -513,7 +665,8 @@
                 
                 spawnEnemies(7);
                 updateUI();
-                console.log("Game started successfully");
+                // Add particle system back
+                scene.add(particleSystem);
             } catch(e) {
                 console.error("Start game error:", e);
                 gameActive = false;
@@ -604,7 +757,6 @@
             player.x = camera.position.x;
             player.z = camera.position.z;
             
-            // Win condition - only if player reaches the yellow zone
             if (centerZone && Math.hypot(player.x - centerZone.mesh.position.x, player.z - centerZone.mesh.position.z) < centerZone.radius) {
                 gameActive = false;
                 document.getElementById("endTitle").innerHTML = "🏆 VICTORY!";
@@ -613,7 +765,6 @@
                 return;
             }
             
-            // Enemy AI
             for (let enemy of enemies) {
                 let dx = player.x - enemy.x;
                 let dz = player.z - enemy.z;
@@ -684,12 +835,14 @@
             let delta = Math.min(0.033, (now - lastTime) / 1000);
             lastTime = now;
             if (gameActive) updateMovement(delta);
+            // Animate particles slowly
+            particleSystem.rotation.y += 0.002;
             renderer.render(scene, camera);
             requestAnimationFrame(animate);
         }
         animate();
 
-        // UI binding
+        // UI binding (unchanged)
         document.getElementById("tabLogin").onclick = () => { document.getElementById("loginPanel").style.display = "block"; document.getElementById("registerPanel").style.display = "none"; };
         document.getElementById("tabReg").onclick = () => { document.getElementById("loginPanel").style.display = "none"; document.getElementById("registerPanel").style.display = "block"; };
         document.getElementById("loginBtn").onclick = async () => {
@@ -742,7 +895,6 @@
         document.querySelector(".map-card[data-weapon='assault']").classList.add("selected");
         document.querySelector(".map-card[data-armor='light']").classList.add("selected");
         
-        // ground helper for reference
         const groundHelper = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshStandardMaterial({ visible: false }));
         groundHelper.rotation.x = -Math.PI/2;
         groundHelper.position.y = -0.2;
